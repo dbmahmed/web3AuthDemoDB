@@ -2,6 +2,7 @@ import React from "react";
 import * as GlobalStyles from "../GlobalStyles.js";
 import * as GlobalVariables from "../config/GlobalVariableContext";
 import * as CustomPackages from "../custom-files/CustomPackages";
+import * as alchemy from "../custom-files/alchemy";
 import * as ethersRPC from "../custom-files/ethersRPC";
 import { Button, ScreenContainer, withTheme } from "@draftbit/ui";
 import { ScrollView, Text, View } from "react-native";
@@ -11,7 +12,19 @@ const BlankScreen = (props) => {
   const Variables = Constants;
 
   const uiconsole = (args) => {
-    setKonsole(`${JSON.stringify({ args } || {}, null, 2)}    ${konsole}`);
+    setKonsole(
+      `${JSON.stringify({ args } || {}, null, 2)}    ${JSON.stringify(
+        konsole,
+        null,
+        2
+      )}`
+    );
+  };
+
+  const getAccounts = async () => {
+    const address = await ethersRPC.getAccounts(key);
+    setAddress(address);
+    uiconsole(address);
   };
 
   const login = async (Variables) => {
@@ -32,22 +45,24 @@ const BlankScreen = (props) => {
 
       setUserInfo(info);
       setKey(info.privKey);
-      console.log("Logged In");
       uiconsole(info);
+      console.log("Logged In");
     } catch (e) {
       console.log(e);
-      uiconsole(e);
+      // uiConsole(e);
     }
   };
 
-  const getAccounts = async () => {
-    setKonsole("Getting account");
-    const address = await ethersRPC.getAccounts(key);
-    uiconsole(address);
+  const getNFTs = async (add) => {
+    let nfts = await alchemy.getNFTsByAddress(add);
+    uiconsole(nfts);
+
+    return nfts;
   };
 
   const { theme } = props;
 
+  const [address, setAddress] = React.useState("");
   const [key, setKey] = React.useState("");
   const [konsole, setKonsole] = React.useState("");
   const [userInfo, setUserInfo] = React.useState({});
@@ -60,8 +75,6 @@ const BlankScreen = (props) => {
           <View>
             {/* Accounts */}
             <Button
-              style={GlobalStyles.ButtonStyles(theme)["Button"]}
-              title={"Get Accounts"}
               onPress={() => {
                 const handler = async () => {
                   try {
@@ -72,13 +85,28 @@ const BlankScreen = (props) => {
                 };
                 handler();
               }}
-            />
-
-            {/* Balance */}
-            <Button
               style={GlobalStyles.ButtonStyles(theme)["Button"]}
-              title={"Get Balance"}
+              title={"Get Accounts"}
             />
+            {/* List NFTs */}
+            <>
+              {!address ? null : (
+                <Button
+                  onPress={() => {
+                    const handler = async () => {
+                      try {
+                        await getNFTs(address);
+                      } catch (err) {
+                        console.error(err);
+                      }
+                    };
+                    handler();
+                  }}
+                  style={GlobalStyles.ButtonStyles(theme)["Button"]}
+                  title={"Get NFTs"}
+                />
+              )}
+            </>
             {/* Private Key */}
             <Button
               style={GlobalStyles.ButtonStyles(theme)["Button"]}
